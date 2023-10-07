@@ -1,0 +1,29 @@
+  - name: Установка Apache на Ubuntu 22.04
+    hosts: all
+    become: true
+
+    tasks:
+
+      - name: Update apt cache 
+        apt:
+          update_cache: yes
+
+      - name: Установка пакета Apache
+        apt:
+          name: apache2
+          state: present
+
+      - name: Запуск службы Apache
+        service:
+          name: apache2
+          state: started
+          enabled: true
+
+    handlers:
+    - name: restart zabbix-agent
+      service:
+        name: zabbix-agent
+        state: restarted
+
+
+

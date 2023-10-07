@@ -1,0 +1,63 @@
+---
+- name: install nginx
+  hosts: second
+  become: yes
+
+  tasks:
+    - name: Create nginx source list file
+      file:
+        path: /etc/apt/sources.list.d/nginx.list
+        state: file
+        content: | 
+        "deb http://nginx.org/packages/mainline/ubuntu/ {{ ansible_distribution_release }} nginx"
+    
+    - name: install nginx
+      ansible.builtin.lineinfile:
+        path: /etc/apt/sources.list.d/nginx.list
+        line: "deb http://nginx.org/packages/mainline/ubuntu/ {{ ansible_distribution_release }} nginx"
+        state: present
+   
+    - name: add key in repository Nginx
+      ansible.builtin.apt_key:
+        url: https://nginx.org/keys/nginx_signing.key
+        state: present
+
+    - name: update packages
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+
+    - name: Start and enable nginx agent service
+      ansible.builtin.lineinfile:
+        name: nginx
+        state: started
+        enabled: true
+      
+    - name: tuning nginx.conf
+      ansible.builtin.lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: '^user='
+        line: 'user www-data;'
+   
+      
+    - name: tuning nginx.conf
+      ansible.builtin.lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: '^access_log'
+        line: 'access_log /var/log/nginx/access.log;'
+   
+    - name: tuning nginx.conf
+      ansible.builtin.lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: '^error_log'
+        line: 'error_log /var/log/nginx/error.log;'
+
+  handlers:   
+    - name: restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted

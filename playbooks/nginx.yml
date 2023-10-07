@@ -1,0 +1,32 @@
+---
+  - name: Установка Nginx на Ubuntu 22.04
+    hosts: second_host
+    become: true
+
+    tasks:
+      - name: Установка пакета Nginx
+        apt:
+          name: nginx
+          state: present
+
+      - name: Clone GitHub repository
+        git:
+          repo: git@github.com:mowertii/mowernginx.git
+          dest: /home/git/mowernginx/
+          version: main
+
+      - name: Synchronize nginx files
+        synchronize:
+          src: /home/git/mowernginx/nginx/
+          dest: /etc/nginx/
+          recursive: yes
+          links: no 
+
+      - name: Запуск службы Nginx
+        service:
+          name: nginx
+          state: started
+          enabled: true
+
+
+

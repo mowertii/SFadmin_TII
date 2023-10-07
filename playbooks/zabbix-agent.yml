@@ -1,0 +1,73 @@
+---
+- name: Install and configure Zabbix agent
+  hosts: all
+  become: true
+
+  tasks:
+  - name: Install Zabbix agent package
+    apt:
+      name: zabbix-agent
+      state: present
+    when: ansible_os_family == 'Ubuntu'
+
+  - name: Start and enable Zabbix agent service
+    service:
+      name: zabbix-agent
+      state: started
+      enabled: true
+
+  - name: Настройка файла конфигурации zabbix_agentd.conf
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^PidFile='
+      line: 'PidFile=/run/zabbix/zabbix_agentd.pid'
+
+  - name: Настройка файла конфигурации zabbix_agentd.conf
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^LogFile='
+      line: 'LogFile=/var/log/zabbix/zabbix_agentd.log'
+
+  - name: Настройка файла конфигурации zabbix_agentd.conf
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^LogFileSize='
+      line: 'LogFileSize=0'
+        
+  - name: Настройка файла конфигурации zabbix_agentd.conf
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^ServerActive='
+      line: 'ServerActive=10.48.0.245'
+
+  - name: Configure Zabbix agent settings
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^Server='
+      line: 'Server=172.22.10.3,10.48.0.245'
+
+  - name: Configure Zabbix agent settings
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^Hostname='
+      line: 'Hostname={{ansible_hostname}}'
+
+  - name: Configure Zabbix agent settings
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^ListenPort='
+      line: 'ListenPort=10050'
+
+  - name: Configure Zabbix agent settings
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^ListenIP='
+      line: 'ListenIP=0.0.0.0'
+    notify:
+    - restart zabbix-agent
+
+  handlers:
+    - name: restart zabbix-agent
+      service:
+        name: zabbix-agent
+        state: restarted

@@ -1,0 +1,20 @@
+---
+- name: show ip
+  hosts: all
+  become: true
+  tasks:
+    - name: Get network interfaces
+      shell: ip addr show dev tun21
+      register: tune_interface
+    - name: Extract network address
+      set_fact:
+        network_address: "{{ (tune_interface.stdout_lines | regex_search('inet
+            ([0-9\\.]+)')) | regex_replace('^inet ', '') }}"
+    - name: Display network address
+      debug:
+        var: network_address
+
+
+
+
+
