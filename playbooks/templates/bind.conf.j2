@@ -1,0 +1,34 @@
+options {
+directory "/var/cache/bind";
+recursion yes;
+allow-query { any; };
+forwarders {
+8.8.8.8;
+8.8.4.4;
+};
+};
+
+zone "." {
+type hint;
+file "/etc/bind/db.root";
+};
+
+zone "localhost" {
+type master;
+file "/etc/bind/db.local";
+};
+
+zone "127.in-addr.arpa" {
+type master;
+file "/etc/bind/db.127";
+};
+
+zone "0.in-addr.arpa" {
+type master;
+file "/etc/bind/db.0";
+};
+
+zone "255.in-addr.arpa" {
+type master;
+file "/etc/bind/db.255";
+};
