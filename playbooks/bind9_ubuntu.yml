@@ -1,0 +1,22 @@
+---
+- name: Install BIND DNS Server
+  hosts: second_host
+  become: true
+  tasks:
+    - name: Install BIND
+      apt:
+        name: bind9
+        state: present
+    - name: Start BIND
+      service:
+        name: bind9
+        state: started
+        enabled: yes
+    - name:
+      template:
+        src: templates/bind.conf.j2
+        dest: /etc/bind/bind.conf
+    - name: Restart BIND
+      service:
+        name: bind9
+        state: restarted
