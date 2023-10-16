@@ -1,0 +1,96 @@
+version: '3.1'
+services:
+
+  postgres-server:
+    container_name: pgsql
+    image: registry.gitlab.com/devops-f/devops/postgresql:14.8.0.d
+    hostname: postgres-server
+    restart: always
+    ports:
+     - 5432:5432
+    environment:
+       #
+       POSTGRES_USER: zabbix
+       POSTGRES_PASSWORD: zabbix
+       POSTGRES_DB: zabbix
+       # 
+       POSTGRESQL_USERNAME: "postgres"
+       POSTGRESQL_PASSWORD: "postgres"
+       POSTGRESQL_DATABASE: "temp"
+       ALLOW_EMPTY_PASSWORD: "no"
+       #
+       SERVER_NAME: "logic"
+       POSTGRESQL_DATA_DIR: "${POSTGRESQL_DATA_DIR}"
+       DISCOVERY_SERVICE_HOST: "${DISCOVERY_SERVICE_HOST}"
+       CONSUL_SERVICE_NAME: "${CLUSTER_NAME_PG_14_BITNAMI}"
+       #
+       CONSUL_AGENT: "false"
+       POSTGRESQL_WAL_LEVEL: "${POSTGRESQL_WAL_LEVEL}"
+       POSTGRESQL_REPLICATION_MODE: "${POSTGRESQL_REPLICATION_MODE}"
+       POSTGRESQL_REPLICATION_USER: "${POSTGRESQL_REPLICATION_USER}"
+       POSTGRESQL_REPLICATION_PASSWORD: "${POSTGRESQL_REPLICATION_PASSWORD}"
+       POSTGRESQL_REPLICATION_SLOT_NAME: "${POSTGRESQL_REPLICATION_SLOT_NAME}"
+       POSTGRESQL_REPLICATION_MAX_WAL_SENDERS: "5"
+       POSTGRESQL_REPLICATION_MAX_REPLICATION_SLOTS: "5"
+       POSTGRESQL_REPLICATION_PROMOTE_TRIGGER_FILE: "/bitnami/postgresql/standby.signal"
+    volumes:
+      - "/docker-data/volumes/pg_14_1:/bitnami/postgresql"
+      - "./configs/postgres-14-1-bitnami/conf:/opt/bitnami/postgresql/conf/conf.d"
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+           size: 513000000
+
+
+  zabbix-server:     # The main Zabbix Server Software Service
+    container_name: zabbix-server
+    image: zabbix/zabbix-server-pgsql:6.0-ubuntu-latest
+    restart: always
+    ports:
+      - target: 587
+        published: 587
+        mode: host
+      - target: 10051
+        published: 10051
+        mode: host
+
+    environment:   # The Postgres database value variable
+      ServerActive: 127.0.0.1:10051
+      ListenIP: 0.0.0.0
+      ListenPort: 10051
+      DB_SERVER_HOST: 192.168.1.245
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix
+      POSTGRES_DB: zabbix
+      ZBX_HISTORYSTORAGETYPES: log,text #Zabbix configuration variables
+      ZBX_DEBUGLEVEL: 1
+    depends_on:
+      - postgres-server
+    volumes:  # Volumes for scripts and related files you can add
+      - /usr/lib/zabbix/alertscripts:/usr/lib/zabbix/alertscripts
+
+  zabbix-web:    # The main Zabbix web UI or interface 
+    container_name: zabbix-web
+    image: zabbix/zabbix-web-nginx-pgsql:6.0-ubuntu-latest
+    restart: always
+    environment:  # Postgre database variables
+      DB_SERVER_HOST: 192.168.1.245
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix
+      POSTGRES_DB: zabbix
+      ZBX_SERVER_HOST: 192.168.1.245  # Zabbix related and Php variables
+      ZBX_POSTMAXSIZE: 64M
+      PHP_TZ: "Europe/Moscow"
+      ZBX_MAXEXECUTIONTIME: 500
+    depends_on:
+      - postgres-server
+      - zabbix-server
+    ports:    # Port where Zabbix UI is available
+      - 8090:8080
+
+  adminer:  #Optional for accessing databases
+    container_name: adminer
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
