@@ -64,6 +64,7 @@ services:
       POSTGRES_DB: zabbix
       ZBX_HISTORYSTORAGETYPES: log,text #Zabbix configuration variables
       ZBX_DEBUGLEVEL: 1
+      forward_x11: true
     depends_on:
       - postgres-server
     volumes:  # Volumes for scripts and related files you can add
